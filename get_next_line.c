@@ -6,7 +6,7 @@
 /*   By: Konstantin Krokhin <kokrokhi@students.42wo +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/28 14:25:00 by Konstantin Krokh  #+#    #+#             */
-/*   Updated: 2022/05/05 18:52:28 by Konstantin Krokh ###   ########.fr       */
+/*   Updated: 2022/05/09 19:22:35 by Konstantin Krokh ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -167,8 +167,8 @@ char	*gnl_strjoin(char *str1, char *str2)
 	gnl_memmove(stringy + len1, str2, len2);
 	if (str1)
 		free(str1);
-	if(str2)
-		free(str2);
+	// if(str2)
+	// 	free(str2);
 	return (stringy);
 }
 
@@ -181,7 +181,6 @@ char	*extract_line(char	*buf, int	*size)
 	while (buf[i] != '\n')
 		i++;
 	line = (char *)malloc((i + 1) * sizeof(char));
-	//line = NULL;
 	i = 0;
 	while (buf[i] != '\n')
 	{
@@ -204,8 +203,9 @@ char	*get_next_line(int fd)
 	static char	remainder[1024];
 	char	buf[BUFFER_SIZE + 1];
 	char	*line;
+	char	*temp;
 	int		size;
-	int i;
+	int		i;
 
 	line = NULL;
 	if (fd < 0 || fd > 1023)
@@ -215,7 +215,9 @@ char	*get_next_line(int fd)
 		if (ft_strchr(remainder, '\n')) // 1
 		{
 			printf("line2: %s", line);
-			line = gnl_strjoin(line, extract_line(remainder, &size));
+			temp = extract_line(remainder, &size);
+			line = gnl_strjoin(line, temp);
+			free (temp);
 			printf("line11: %s", line);
 			ft_memmove(&remainder[0], &remainder[size], sizeof(remainder) - size);
 			printf("rem: %s", remainder); 
@@ -244,7 +246,9 @@ char	*get_next_line(int fd)
 					if (ft_strchr(buf, '\n')) // 1
 					{
 						printf("line2: %s", line);
-						line = gnl_strjoin(line, extract_line(buf, &size));
+						temp = extract_line(buf, &size);
+						line = gnl_strjoin(line, temp);
+						free (temp);
 						printf("line111: %s", line);
 						ft_memmove(remainder, &buf[size], sizeof(remainder) - size);
 						printf("rem: %s", remainder);
@@ -264,13 +268,15 @@ char	*get_next_line(int fd)
 		if (ft_strchr(buf, '\n')) // 1
 		{
 			printf("line2: %s", line);
-			line = gnl_strjoin(line, extract_line(buf, &size));
+			temp = extract_line(buf, &size);
+			line = gnl_strjoin(line, temp);
+			free (temp);
 			printf("line1111: %s", line);
 			ft_memmove(remainder, &buf[size], sizeof(remainder) - size);
 			printf("rem: %s", remainder);
 		}
 	}
-	remainder[0] = '\0';
+	//remainder[0] = '\0';
 	return (line);
 }
 
