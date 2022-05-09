@@ -6,171 +6,11 @@
 /*   By: Konstantin Krokhin <kokrokhi@students.42wo +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/28 14:25:00 by Konstantin Krokh  #+#    #+#             */
-/*   Updated: 2022/05/09 19:22:35 by Konstantin Krokh ###   ########.fr       */
+/*   Updated: 2022/05/09 21:15:51 by Konstantin Krokh ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <fcntl.h> 
-#include "stdio.h"
-#include <stdlib.h>
 #include "get_next_line.h"
-#include "get_next_line_utils.c"
-#include <stdbool.h>
-
-#ifndef BUFFER_SIZE
-# define BUFFER_SIZE 10
-#endif
-
-size_t	gnl_strlen(const char *s)
-{
-	int	size;
-
-	size = 0;
-	if (!s)
-		return (0);
-	while (s[size] != '\0')
-		size++;
-	return (size);
-}
-
-void	*ft_memmove(void *dst, const void *src, size_t len)
-{
-	char	*d;
-	char	*s;
-
-	d = (char *)dst;
-	s = (char *)src;
-	if (dst == src)
-		return (dst);
-	if (s < d)
-	{
-		while (len--)
-			*(d + len) = *(s + len);
-		return (dst);
-	}
-	while (len-- != 0)
-		*d++ = *s++;
-	return (dst);
-}
-
-char	*ft_strchr(const char *s, int c)
-{
-	char	*f;
-	int		i;
-	int		len;
-
-	i = 0;
-	f = (char *)s;
-	len = gnl_strlen(f);
-	if (c < 0 || c > 255)
-		return (f);
-	while (i <= len)
-	{
-		if (f[i] == c)
-			return (&f[i]);
-		i++;
-	}
-	return (NULL);
-}
-
-// int	ft_strncmp(const char *s1, const char *s2, size_t n)
-// {
-// 	int				diff;
-// 	unsigned char	*str1;
-// 	unsigned char	*str2;
-
-// 	diff = 0;
-// 	if (n < 1)
-// 		return (0);
-// 	str1 = (unsigned char *)s1;
-// 	str2 = (unsigned char *)s2;
-// 	while (*str1 == *str2 && n > 1 && (*str1 != '\0' && *str2 != '\0'))
-// 	{
-// 		str1++;
-// 		str2++;
-// 		n--;
-// 	}
-// 	return (*str1 - *str2);
-// }
-
-// char	*ft_strjoin(char const *s1, char const *s2)
-// {
-// 	char	*str;
-// 	size_t	s1_size;
-// 	size_t	s2_size;
-
-// 	s1_size = ft_strlen(s1);
-// 	s2_size = ft_strlen(s2);
-// 	if ((!s1 && !s2)
-// 		|| (ft_strncmp(s1, s2, s1_size) == 0
-// 			&& ft_strncmp("", s2, s2_size) == 0))
-// 		return ("");
-// 	str = malloc((s1_size + s2_size + 1) * sizeof(char));
-// 	if (!str)
-// 		return (NULL);
-// 	ft_memmove(str, s1, s1_size);
-// 	ft_memmove(str + s1_size, s2, s2_size);
-// 	str[s1_size + s2_size] = '\0';
-// 	return (str);
-// }
-
-char	*gnl_memmove(char *dest, char *src, size_t len)
-{
-	size_t	i;
-
-	i = 0;
-	if (!dest && !src)
-		return (NULL);
-	if (dest > src)
-	{
-		while (len-- > 0)
-			dest[len] = src[len];
-	}
-	else
-	{
-		while (i < len)
-		{
-			dest[i] = src[i];
-			i++;
-		}
-	}
-	return (dest);
-}
-
-char	*gnl_calloc(int count)
-{
-	char	*stringy;
-	int		i;
-
-	i = 0;
-	stringy = malloc (count * sizeof(char));
-	if (!stringy)
-		return (NULL);
-	while (i < count)
-		stringy[i++] = '\0';
-	return (stringy);
-}
-
-char	*gnl_strjoin(char *str1, char *str2)
-{
-	int		len1;
-	int		len2;
-	char	*stringy;
-
-	len2 = gnl_strlen(str2);
-	len1 = gnl_strlen(str1);
-	stringy = gnl_calloc((len1 + len2) + 1);
-	if (!stringy)
-		return (NULL);
-	if (str1)
-		gnl_memmove(stringy, str1, len1);
-	gnl_memmove(stringy + len1, str2, len2);
-	if (str1)
-		free(str1);
-	// if(str2)
-	// 	free(str2);
-	return (stringy);
-}
 
 char	*extract_line(char	*buf, int	*size)
 {
@@ -193,65 +33,51 @@ char	*extract_line(char	*buf, int	*size)
 		i++;
 	}
 	line[i] = '\0';
-	printf("EXTRACT LINE: %s", line);
 	*size = i;
-	return(line);
+	return (line);
 }
 
 char	*get_next_line(int fd)
 {
 	static char	remainder[1024];
-	char	buf[BUFFER_SIZE + 1];
-	char	*line;
-	char	*temp;
-	int		size;
-	int		i;
+	char		buf[BUFFER_SIZE + 1];
+	char		*line;
+	char		*temp;
+	int			size;
+	int			i;
 
 	line = NULL;
-	if (fd < 0 || fd > 1023)
+	if (fd < 0)
 		return (NULL);
 	if (remainder[0] != '\0')
 	{
 		if (ft_strchr(remainder, '\n')) // 1
 		{
-			printf("line2: %s", line);
 			temp = extract_line(remainder, &size);
 			line = gnl_strjoin(line, temp);
 			free (temp);
-			printf("line11: %s", line);
 			ft_memmove(&remainder[0], &remainder[size], sizeof(remainder) - size);
-			printf("rem: %s", remainder); 
 		}
 		else
 		{
 			line = gnl_strjoin(line, remainder);
-			printf("END line: %s", line);
 			remainder[0] = '\0';
 			buf[i = read(fd, buf, BUFFER_SIZE)] = '\0';
 			if (i == 0)
-			{
-				printf("HALLO: %s", line);
 				return (line);
-			}
 			else
 				{
-					printf("buf: %s", buf);
 					while (!ft_strchr(buf, '\n'))
 					{
-						printf("!line: %s", line);
 						line = gnl_strjoin(line, buf);
-						printf("!line: %s", line);
 						buf[read(fd, buf, BUFFER_SIZE)] = '\0';		
 					}
-					if (ft_strchr(buf, '\n')) // 1
+					if (ft_strchr(buf, '\n'))
 					{
-						printf("line2: %s", line);
 						temp = extract_line(buf, &size);
 						line = gnl_strjoin(line, temp);
 						free (temp);
-						printf("line111: %s", line);
 						ft_memmove(remainder, &buf[size], sizeof(remainder) - size);
-						printf("rem: %s", remainder);
 					}
 				}
 		}
@@ -259,7 +85,6 @@ char	*get_next_line(int fd)
 	else
 	{
 		buf[read(fd, buf, BUFFER_SIZE)] = '\0';
-		printf("buf: %s", buf);
 		while (!ft_strchr(buf, '\n') && buf[0] != '\0')
 		{
 			line = gnl_strjoin(line, buf);
@@ -267,16 +92,12 @@ char	*get_next_line(int fd)
 		}
 		if (ft_strchr(buf, '\n')) // 1
 		{
-			printf("line2: %s", line);
 			temp = extract_line(buf, &size);
 			line = gnl_strjoin(line, temp);
 			free (temp);
-			printf("line1111: %s", line);
 			ft_memmove(remainder, &buf[size], sizeof(remainder) - size);
-			printf("rem: %s", remainder);
 		}
 	}
-	//remainder[0] = '\0';
 	return (line);
 }
 
