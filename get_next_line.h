@@ -6,7 +6,7 @@
 /*   By: Konstantin Krokhin <kokrokhi@students.42wo +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/28 14:25:21 by Konstantin Krokh  #+#    #+#             */
-/*   Updated: 2022/05/09 21:15:22 by Konstantin Krokh ###   ########.fr       */
+/*   Updated: 2022/05/12 21:05:13 by Konstantin Krokh ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 # include <stdbool.h>
 # include <unistd.h>
 # ifndef BUFFER_SIZE
-#  define BUFFER_SIZE 10
+#  define BUFFER_SIZE 100
 # endif
 
 char	*get_next_line(int fd);

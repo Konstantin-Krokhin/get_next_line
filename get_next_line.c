@@ -6,7 +6,7 @@
 /*   By: Konstantin Krokhin <kokrokhi@students.42wo +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/28 14:25:00 by Konstantin Krokh  #+#    #+#             */
-/*   Updated: 2022/05/09 21:15:51 by Konstantin Krokh ###   ########.fr       */
+/*   Updated: 2022/05/12 21:38:30 by Konstantin Krokh ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,18 @@ char	*extract_line(char	*buf, int	*size)
 	return (line);
 }
 
+char	*extract_line_and_move_buf(char *remainder, char *line, int *size)
+{
+	char		*temp;
+	
+	temp = extract_line(remainder, size);
+	line = gnl_strjoin(line, temp);
+	free (temp);
+	ft_memmove(&remainder[0], &remainder[*size], sizeof(remainder) - *size);
+	
+	return (line); // buf ??
+}
+
 char	*get_next_line(int fd)
 {
 	static char	remainder[1024];
@@ -47,12 +59,13 @@ char	*get_next_line(int fd)
 	int			i;
 
 	line = NULL;
-	if (fd < 0)
+	if (fd < 0 || fd > 1024 || read (fd, NULL, 0) || BUFFER_SIZE <= 0)
 		return (NULL);
 	if (remainder[0] != '\0')
 	{
 		if (ft_strchr(remainder, '\n')) // 1
 		{
+			//line = extract_line_and_move_buf(&remainder[0], line, &size);
 			temp = extract_line(remainder, &size);
 			line = gnl_strjoin(line, temp);
 			free (temp);
@@ -66,36 +79,41 @@ char	*get_next_line(int fd)
 			if (i == 0)
 				return (line);
 			else
+			{
+				if (!ft_strchr(buf, '\n')) // CHANGED WHILE to IF
 				{
-					while (!ft_strchr(buf, '\n'))
-					{
-						line = gnl_strjoin(line, buf);
-						buf[read(fd, buf, BUFFER_SIZE)] = '\0';		
-					}
-					if (ft_strchr(buf, '\n'))
-					{
-						temp = extract_line(buf, &size);
-						line = gnl_strjoin(line, temp);
-						free (temp);
-						ft_memmove(remainder, &buf[size], sizeof(remainder) - size);
-					}
+					line = gnl_strjoin(line, buf);
+					buf[read(fd, buf, BUFFER_SIZE)] = '\0';
+					// if (i == 0)
+					// 	return (line); // Needed?
 				}
+				if (ft_strchr(buf, '\n'))
+				{
+					temp = extract_line(buf, &size);
+					line = gnl_strjoin(line, temp);
+					free (temp);
+					ft_memmove(remainder, &buf[size], sizeof(remainder) - size);
+				}
+			}
 		}
 	}
 	else
 	{
-		buf[read(fd, buf, BUFFER_SIZE)] = '\0';
+		buf[i = read(fd, buf, BUFFER_SIZE)] = '\0';
 		while (!ft_strchr(buf, '\n') && buf[0] != '\0')
 		{
 			line = gnl_strjoin(line, buf);
-			buf[read(fd, buf, BUFFER_SIZE)] = '\0';
+			buf[i = read(fd, buf, BUFFER_SIZE)] = '\0';
+			// if (i == 0)
+			// 	return (line); /// Needed?
 		}
 		if (ft_strchr(buf, '\n')) // 1
 		{
 			temp = extract_line(buf, &size);
 			line = gnl_strjoin(line, temp);
 			free (temp);
-			ft_memmove(remainder, &buf[size], sizeof(remainder) - size);
+			if ((int)sizeof(remainder) > size)
+				ft_memmove(remainder, &buf[size], sizeof(remainder) - size);
 		}
 	}
 	return (line);
