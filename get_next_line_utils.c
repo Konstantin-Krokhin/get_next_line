@@ -6,11 +6,11 @@
 /*   By: Konstantin Krokhin <kokrokhi@students.42wo +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/28 14:25:17 by Konstantin Krokh  #+#    #+#             */
-/*   Updated: 2022/05/09 21:13:57 by Konstantin Krokh ###   ########.fr       */
+/*   Updated: 2022/05/18 21:33:31 by Konstantin Krokh ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
+# include "get_next_line.h"
 #ifndef GET_NEXT_LINE_UTILS
 # define GET_NEXT_LINE_UTILS
 
@@ -41,7 +41,7 @@ void	*ft_memmove(void *dst, const void *src, size_t len)
 			*(d + len) = *(s + len);
 		return (dst);
 	}
-	while (len-- != 0)
+	while (len--)
 		*d++ = *s++;
 	return (dst);
 }
