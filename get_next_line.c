@@ -6,11 +6,11 @@
 /*   By: Konstantin Krokhin <kokrokhi@students.42wo +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/28 14:25:00 by Konstantin Krokh  #+#    #+#             */
-/*   Updated: 2022/05/18 21:33:01 by Konstantin Krokh ###   ########.fr       */
+/*   Updated: 2022/05/23 15:20:18 by Konstantin Krokh ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line_utils.c"
+#include "get_next_line.h"
 
 char	*extract_line(char	*buf, int	*size)
 {
@@ -34,6 +34,104 @@ char	*extract_line(char	*buf, int	*size)
 	}
 	line[i] = '\0';
 	*size = i;
+	return (line);
+}
+
+char	*return_line_add_remainder(char *remainder, int *s, char **line, int fd)
+{
+	int size;
+	int i;
+	char *temp;
+	char buf[BUFFER_SIZE + 1];
+
+	size = 0;
+	*line = gnl_strjoin(*line, remainder);
+	remainder = NULL;
+	buf[i = read(fd, buf, BUFFER_SIZE)] = '\0';
+	if (i > 0)
+	{
+		if (!ft_strchr(buf, '\n'))
+		{
+			*line = gnl_strjoin(*line, buf);
+			buf[read(fd, buf, BUFFER_SIZE)] = '\0';
+		}
+		if (ft_strchr(buf, '\n'))
+		{
+			temp = extract_line(buf, &size);
+			*line = gnl_strjoin(*line, temp);
+			free (temp);
+			ft_memmove(&remainder[0], &buf[size], sizeof(remainder) - size);
+		}
+	}
+	*s = size;
+	return (remainder);
+}
+
+char	*get_next_line(int fd)
+{
+	static char	remainder[1024];
+	char		buf[BUFFER_SIZE + 1];
+	char		*line;
+	char		*temp;
+	int			size;
+	int	i;
+
+	line = NULL;
+	if (fd < 0 || fd > 1024 || read (fd, NULL, 0) || BUFFER_SIZE <= 0)
+		return (NULL);
+	if (remainder[0] != '\0')
+	{
+		if (ft_strchr(remainder, '\n')) // 1
+		{
+			//line = extract_line_and_move_buf(&remainder[0], line, &size); LEAK 0x7ffe3f405850
+			temp = extract_line(remainder, &size);
+			line = gnl_strjoin(line, temp);
+			free (temp);
+			ft_memmove(&remainder[0], &remainder[size], sizeof(remainder) - size);
+		}
+		else
+		{
+			//-----------------------------------
+			line = gnl_strjoin(line, remainder);
+			remainder[0] = '\0';
+			buf[i = read(fd, buf, BUFFER_SIZE)] = '\0';
+			if (i == 0)
+				return (line);
+			else
+			{
+				if (!ft_strchr(buf, '\n'))
+				{
+					line = gnl_strjoin(line, buf);
+					buf[read(fd, buf, BUFFER_SIZE)] = '\0';
+				}
+				if (ft_strchr(buf, '\n'))
+				{
+					temp = extract_line(buf, &size);
+					line = gnl_strjoin(line, temp);
+					free (temp);
+					ft_memmove(&remainder, &buf[size], sizeof(remainder) - size);
+				}
+			}
+		}
+	}
+	else
+	{
+		buf[i = read(fd, buf, BUFFER_SIZE)] = '\0';
+		while (!ft_strchr(buf, '\n') && buf[0] != '\0')
+		{
+			line = gnl_strjoin(line, buf);
+			buf[i = read(fd, buf, BUFFER_SIZE)] = '\0';
+		}
+
+		if (ft_strchr(buf, '\n')) // 1
+		{
+			temp = extract_line(buf, &size);
+			line = gnl_strjoin(line, temp);
+			free (temp);
+			if ((int)sizeof(remainder) > size)
+				ft_memmove(remainder, &buf[size], sizeof(remainder) - size);
+		}
+	}
 	return (line);
 }
 
@@ -64,133 +162,26 @@ char	*extract_line(char	*buf, int	*size)
 // 	return (line);
 // }
 
-char	*return_line_add_remainder(char *remainder, int *s, char **line, int fd)
-{
-	int size;
-	int i;
-	char *temp;
-	char buf[BUFFER_SIZE + 1];
-
-	size = 0;
-	*line = gnl_strjoin(*line, remainder);
-	remainder = NULL;
-	buf[i = read(fd, buf, BUFFER_SIZE)] = '\0';
-	if (i <= 0)
-	{
-		*s = 0;
-		return (remainder);
-	}
-	else
-	{
-		if (!ft_strchr(buf, '\n'))
-		{
-			*line = gnl_strjoin(*line, buf);
-			buf[read(fd, buf, BUFFER_SIZE)] = '\0';
-		}
-		if (ft_strchr(buf, '\n'))
-		{
-			temp = extract_line(buf, &size);
-			*line = gnl_strjoin(*line, temp);
-			free (temp);
-			ft_memmove(&remainder, &buf[size], sizeof(remainder) - size);
-			*s = size;
-		}
-	}
-	return (remainder);
-}
-
-char	*get_next_line(int fd)
-{
-	static char	remainder[1024];
-	char		buf[BUFFER_SIZE + 1];
-	char		*line;
-	char		*temp;
-	int			size;
-	int	i;
-
-	line = NULL;
-	if (fd < 0 || fd > 1024 || read (fd, NULL, 0) || BUFFER_SIZE <= 0)
-		return (NULL);
-	if (remainder[0] != '\0')
-	{
-		if (ft_strchr(remainder, '\n')) // 1
-		{
-			//line = extract_line_and_move_buf(&remainder[0], line, &size);
-			temp = extract_line(remainder, &size);
-			line = gnl_strjoin(line, temp);
-			free (temp);
-			ft_memmove(&remainder[0], &remainder[size], sizeof(remainder) - size);
-		}
-		else
-		{
-			temp = return_line_add_remainder(remainder, &size, &line, fd); // to copy?
-			if (size == 0 && temp == NULL)
-			{
-				remainder[0] = '\0';
-				return (line);
-			}
-			ft_memmove(&remainder[0], &temp[size], sizeof(temp) - size);
-			free (temp);
-			// line = gnl_strjoin(line, remainder);
-			// remainder[0] = '\0';
-			// buf[i = read(fd, buf, BUFFER_SIZE)] = '\0';
-			// if (i == 0)
-			// 	return (line);
-			// else
-			// {
-			// 	if (!ft_strchr(buf, '\n'))
-			// 	{
-			// 		line = gnl_strjoin(line, buf);
-			// 		buf[read(fd, buf, BUFFER_SIZE)] = '\0';
-			// 	}
-			// 	if (ft_strchr(buf, '\n'))
-			// 	{
-			// 		temp = extract_line(buf, &size);
-			// 		line = gnl_strjoin(line, temp);
-			// 		free (temp);
-			// 		ft_memmove(&remainder, &buf[size], sizeof(remainder) - size);
-			// 	}
-			// }
-		}
-	}
-	else
-	{
-		buf[i = read(fd, buf, BUFFER_SIZE)] = '\0';
-		while (!ft_strchr(buf, '\n') && buf[0] != '\0')
-		{
-			line = gnl_strjoin(line, buf);
-			buf[i = read(fd, buf, BUFFER_SIZE)] = '\0';
-		}
-
-		if (ft_strchr(buf, '\n')) // 1
-		{
-			temp = extract_line(buf, &size);
-			line = gnl_strjoin(line, temp);
-			free (temp);
-			if ((int)sizeof(remainder) > size)
-				ft_memmove(remainder, &buf[size], sizeof(remainder) - size);
-		}
-	}
-	return (line);
-}
 // -------------------------------------------- OTHER SOLUTIONS --------------------------------------------------------------------
-int	main(int argc, char *argv[])
-{
-	int		fd;
-	char	*func_res;
-	int		i;
+// int	main(int argc, char *argv[])
+// {
+// 	int		fd;
+// 	char	*func_res;
+// 	int		i;
 
-	fd = open(argv[1], O_RDONLY);
-	func_res = "";
-	i = 0;
-	while (func_res != NULL)
-	{
-		func_res = get_next_line(fd);
-		printf("<%s>", func_res);
-	}
-	free(func_res);
-	return(0);
-}
+// 	fd = open("f.txt", O_RDONLY);
+// 	func_res = "";
+// 	i = 0;
+// 	while (func_res != NULL)
+// 	{
+// 		func_res = get_next_line(fd);
+// 		printf("<%s>", func_res);
+// 	}
+// 	free(func_res);
+// 	return(0);
+// }
+
+// -----------
 
 /*
 char	*extract_line(char	*buf, int	*size)
